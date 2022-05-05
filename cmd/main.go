@@ -10,15 +10,21 @@ import (
 )
 
 func main() {
-	w := &kafka.Writer{
-		Addr:                   kafka.TCP("0.0.0.0:9092"),
-		Topic:                  "topic-A",
-		Balancer:               &kafka.LeastBytes{},
-		AllowAutoTopicCreation: true,
+	dialer := &kafka.Dialer{
+		Timeout:         10 * time.Second,
+		DualStack:       true,
+		TransactionalID: "1",
 	}
+	w := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:      []string{"0.0.0.0:9092"},
+		Topic:        "topic-A",
+		Balancer:     &kafka.Hash{},
+		Dialer:       dialer,
+		RequiredAcks: 0,
+	})
 
 	var err error
-	const retries = 10
+	const retries = 1
 	for i := 0; i < retries; i++ {
 		messages := []kafka.Message{
 			{
